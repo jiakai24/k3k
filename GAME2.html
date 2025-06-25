@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <title>第二關 點擊瓶子作答</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: sans-serif;
+      background-color: #e0f7fa;
+      background-image: url("images/bg03.jpeg");
+      background-size: cover;
+      background-position: center;
+      text-align: center;
+      color: #fff;
+    }
+
+    h1 {
+      margin-top: 30px;
+      color: #ffffff;
+      text-shadow: 1px 1px 4px #000;
+    }
+
+    .bottle-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px;
+      padding: 40px;
+    }
+
+    .bottle {
+      width: 80px;
+      height: 120px;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    .bottle:hover {
+      transform: scale(1.1);
+    }
+
+    #result {
+      font-size: 24px;
+      margin-top: 20px;
+      color: #fff;
+      font-weight: bold;
+      text-shadow: 1px 1px 2px #000;
+    }
+
+    #restartButton,
+    #nextButton,
+    #musicToggle {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 18px;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+      color: white;
+    }
+
+    #restartButton, #nextButton {
+      display: none;
+      background-color: #00796b;
+    }
+
+    #nextButton {
+      background-color: #ff9800;
+      margin-left: 10px;
+    }
+
+    #musicToggle {
+      background-color: #3f51b5;
+      position: fixed;
+      top: 20px;
+      right: 20px;
+    }
+
+    /* Modal 題目視窗樣式 */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0,0,0,0.6);
+    }
+
+    .modal-content {
+      background-color: #ffffff;
+      margin: 15% auto;
+      padding: 20px;
+      border-radius: 12px;
+      width: 80%;
+      max-width: 400px;
+      color: black;
+      text-align: left;
+    }
+
+    .modal-content h2 {
+      font-size: 20px;
+    }
+
+    .modal-content button {
+      display: block;
+      margin: 10px 0;
+      padding: 8px;
+      width: 100%;
+      font-size: 16px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+    }
+
+    .close-button {
+      background-color: gray !important;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <h1>💧 第二關 水資源問答</h1>
+  <p>點擊每個瓶子進行作答，共 7 題，答對 4 題以上即過關</p>
+  <div class="bottle-container" id="bottleContainer"></div>
+  <div id="result"></div>
+  <button id="restartButton" onclick="startGame()">重新開始</button>
+  <button id="nextButton" onclick="location.href='GAME3.html'">下一關</button>
+  <button id="musicToggle">🔊 音樂開</button>
+
+  <!-- 題目彈出視窗 -->
+  <div id="questionModal" class="modal">
+    <div class="modal-content">
+      <h2 id="modalQuestion">題目</h2>
+      <div id="modalOptions"></div>
+      <div id="modalFeedback" style="margin-top: 10px; font-weight: bold;"></div>
+      <button class="close-button" onclick="closeModal()">取消</button>
+    </div>
+  </div>
+
+  <!-- 背景音樂 -->
+  <audio id="backgroundMusic" src="music1.mp3" preload="auto" loop autoplay></audio>
+
+  <script>
+    const questions = [
+      {
+        question: "下列哪一項是節約用水的方法？",
+        options: [
+          { text: "每次洗手都不關水龍頭", correct: false },
+          { text: "洗澡時減少用水時間", correct: true },
+          { text: "將洗菜水直接倒掉", correct: false }
+        ]
+      },
+      {
+        question: "地球上約有多少水是可供人類直接使用的淡水？",
+        options: [
+          { text: "97%", correct: false },
+          { text: "10%", correct: false },
+          { text: "少於 1%", correct: true }
+        ]
+      },
+      {
+        question: "哪一種水資源回收方式可以重複使用水？",
+        options: [
+          { text: "將雨水收集用來澆花", correct: true },
+          { text: "將洗衣水直接排入河川", correct: false },
+          { text: "用瓶裝水洗衣服", correct: false }
+        ]
+      },
+      {
+        question: "在缺水地區，哪種做法可以改善飲用水問題？",
+        options: [
+          { text: "把海水煮沸喝掉", correct: false },
+          { text: "使用太陽能淨水器", correct: true },
+          { text: "挖更深的井", correct: false }
+        ]
+      },
+      {
+        question: "水資源汙染的主要原因之一是？",
+        options: [
+          { text: "植樹造林", correct: false },
+          { text: "工業廢水排入河川", correct: true },
+          { text: "飲用礦泉水", correct: false }
+        ]
+      },
+      {
+        question: "SDG 6 的核心目標是什麼？",
+        options: [
+          { text: "提高水價賺錢", correct: false },
+          { text: "確保所有人都能獲得乾淨的水與衛生設施", correct: true },
+          { text: "建造更多游泳池", correct: false }
+        ]
+      },
+      {
+        question: "為什麼我們要愛惜水資源？",
+        options: [
+          { text: "因為水可以免費取得", correct: false },
+          { text: "因為地球水資源是無限的", correct: false },
+          { text: "因為水是生活與健康不可或缺的資源", correct: true }
+        ]
+      }
+    ];
+
+    let answered = [];
+    let score = 0;
+    const hoverSound = new Audio("https://www.soundjay.com/buttons/sounds/button-16.mp3");
+    const backgroundMusic = document.getElementById("backgroundMusic");
+    const musicToggleBtn = document.getElementById("musicToggle");
+
+    window.addEventListener("load", () => {
+      const playPromise = backgroundMusic.play();
+      if (playPromise !== undefined) {
+        playPromise.catch((error) => {
+          console.warn("瀏覽器可能阻止了自動播放:", error);
+        });
+      }
+    });
+
+    musicToggleBtn.addEventListener("click", () => {
+      if (backgroundMusic.paused) {
+        backgroundMusic.play();
+        musicToggleBtn.textContent = "🔊 音樂開";
+      } else {
+        backgroundMusic.pause();
+        musicToggleBtn.textContent = "🔇 音樂關";
+      }
+    });
+
+    function startGame() {
+      const container = document.getElementById("bottleContainer");
+      container.innerHTML = "";
+      answered = [];
+      score = 0;
+      document.getElementById("result").textContent = "";
+      document.getElementById("restartButton").style.display = "none";
+      document.getElementById("nextButton").style.display = "none";
+
+      for (let i = 0; i < 7; i++) {
+        const img = document.createElement("img");
+        img.src = "https://bing.com/th/id/BCO.b395f458-242d-4fc4-a524-c7bf45073c8f.png";
+        img.className = "bottle";
+        img.onclick = () => askQuestion(i, img);
+        img.addEventListener("mouseenter", () => {
+          hoverSound.currentTime = 0;
+          hoverSound.play();
+        });
+        container.appendChild(img);
+      }
+    }
+
+    function askQuestion(index, imgEl) {
+      if (answered.includes(index)) return;
+
+      const q = questions[index];
+      const modal = document.getElementById("questionModal");
+      const modalQuestion = document.getElementById("modalQuestion");
+      const modalOptions = document.getElementById("modalOptions");
+      const modalFeedback = document.getElementById("modalFeedback");
+
+      modalQuestion.textContent = `題目 ${index + 1}：${q.question}`;
+      modalOptions.innerHTML = "";
+      modalFeedback.textContent = "";
+
+      q.options.forEach((opt, i) => {
+        const btn = document.createElement("button");
+        btn.textContent = `${String.fromCharCode(65 + i)}. ${opt.text}`;
+        btn.onclick = () => {
+          if (opt.correct) {
+            modalFeedback.textContent = "✅ 答對了！";
+            modalFeedback.style.color = "green";
+            score++;
+            imgEl.style.opacity = 0.4;
+          } else {
+            modalFeedback.textContent = "❌ 答錯了！";
+            modalFeedback.style.color = "red";
+            imgEl.style.opacity = 0.2;
+          }
+
+          imgEl.style.pointerEvents = "none";
+          answered.push(index);
+
+          setTimeout(() => {
+            closeModal();
+            if (answered.length === 7) {
+              showResult();
+            }
+          }, 1000);
+        };
+        modalOptions.appendChild(btn);
+      });
+
+      modal.style.display = "block";
+    }
+
+    function closeModal() {
+      document.getElementById("questionModal").style.display = "none";
+    }
+
+    function showResult() {
+      const resultEl = document.getElementById("result");
+      if (score >= 4) {
+        resultEl.textContent = `🎉 你答對了 ${score} 題，過關了！`;
+        document.getElementById("nextButton").style.display = "inline-block";
+      } else {
+        resultEl.textContent = `😢 你只答對了 ${score} 題，請再接再厲！`;
+      }
+      document.getElementById("restartButton").style.display = "inline-block";
+    }
+
+    startGame();
+  </script>
+</body>
+</html>
